@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>周末城市探索指南</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sanfu: {
+              orange: '#F56C2D',
+              cream: '#FFF9F4',
+              ink: '#262626',
+              muted: '#8D8D8D',
+              line: '#EAE7E3'
+            }
+          },
+          boxShadow: {
+            soft: '0 12px 40px rgba(48, 38, 28, 0.08)',
+            card: '0 8px 24px rgba(48, 38, 28, 0.07)'
+          },
+          keyframes: {
+            floaty: {
+              '0%,100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-6px)' }
+            },
+            fadeUp: {
+              '0%': { opacity: '0', transform: 'translateY(12px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
+            },
+            pulseSoft: {
+              '0%,100%': { boxShadow: '0 0 0 0 rgba(245,108,45,.22)' },
+              '50%': { boxShadow: '0 0 0 9px rgba(245,108,45,0)' }
+            }
+          },
+          animation: {
+            floaty: 'floaty 4s ease-in-out infinite',
+            fadeUp: 'fadeUp .45s ease-out both',
+            pulseSoft: 'pulseSoft 1.8s infinite'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif; }
+    .hide-scroll::-webkit-scrollbar { display: none; }
+    .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+    .glass { backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+    .nav-active { color: #F56C2D; }
+    .nav-active .nav-dot { opacity: 1; transform: scale(1); }
+    .modal { opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+    .modal.show { opacity: 1; pointer-events: auto; }
+    .modal-card { transform: translateY(15px) scale(.98); transition: transform .25s ease; }
+    .modal.show .modal-card { transform: translateY(0) scale(1); }
+  </style>
+</head>
+<body class="bg-[#FBF9F6] text-sanfu-ink min-h-screen">
+  <div id="app" class="max-w-[1440px] mx-auto min-h-screen bg-[#FBF9F6]">
+    <!-- Desktop Header -->
+    <header class="hidden md:block sticky top-0 z-40 bg-[#FBF9F6]/90 glass border-b border-sanfu-line">
+      <div class="px-8 lg:px-12 h-[74px] flex items-center justify-between">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="go('home')">
+          <div class="w-10 h-10 rounded-2xl bg-sanfu-orange text-white grid place-items-center shadow-card font-black">周</div>
+          <div>
+            <div class="font-black tracking-tight text-lg">周末城市探索指南</div>
+            <div class="text-[11px] text-sanfu-muted tracking-[.18em] uppercase">Weekend Explorer</div>
+          </div>
+        </div>
+        <nav class="flex items-center gap-7 text-sm font-semibold">
+          <button class="navLink" data-page="home" onclick="go('home')">首页</button>
+          <button class="navLink" data-page="recommend" onclick="go('recommend')">AI推荐</button>
+          <button class="navLink" data-page="teams" onclick="go('teams')">组队大厅</button>
+          <button class="navLink" data-page="checkin" onclick="go('checkin')">打卡分享</button>
+        </nav>
+        <button onclick="openProfile()" class="w-10 h-10 rounded-full bg-white border border-sanfu-line grid place-items-center font-semibold hover:shadow-card transition">Yi</button>
+      </div>
+    </header>
+
+    <main class="pb-24 md:pb-8">
+      <!-- HOME -->
+      <section id="page-home" class="page">
+        <div class="px-5 md:px-8 lg:px-12 pt-6 md:pt-10">
+          <div class="flex items-end justify-between mb-6">
+            <div>
+              <div class="inline-flex items-center gap-2 text-xs text-sanfu-muted mb-3 px-3 py-1.5 bg-white rounded-full border border-sanfu-line">
+                <span class="w-2 h-2 bg-green-500 rounded-full"></span> 周末营业中
+              </div>
+              <h1 class="text-[32px] md:text-[48px] leading-tight font-black tracking-[-.04em]">这个周末，<br/>去城市里逛逛。</h1>
+              <p class="text-sanfu-muted mt-3 max-w-xl">把展览、市集、演出、徒步和好天气放在一起，给你一个不用纠结的周末答案。</p>
+            </div>
+            <div class="hidden md:flex gap-3">
+              <button onclick="openCity()" class="px-4 py-3 bg-white border border-sanfu-line rounded-2xl font-semibold hover:shadow-card transition">📍 东京 · 选择城市</button>
+            </div>
+          </div>
+
+          <!-- Weather / AI -->
+          <div class="grid lg:grid-cols-[1.1fr_.9fr] gap-5">
+            <div class="rounded-[28px] bg-[#F3E7DA] p-6 md:p-8 relative overflow-hidden shadow-soft min-h-[250px]">
+              <div class="absolute -right-10 -top-10 w-48 h-48 rounded-full border-[24px] border-white/50"></div>
+              <div class="absolute right-10 bottom-5 text-7xl animate-floaty">☀️</div>
+              <div class="relative z-10 max-w-[72%]">
+                <div class="flex items-center gap-2 text-sm text-[#775E4D]"><span>东京</span><span>·</span><span>晴朗</span></div>
+                <div class="flex items-end gap-3 mt-3"><div class="text-6xl font-black tracking-[-.06em]">24°</div><div class="pb-2 text-[#775E4D]">体感舒适<br/>适合户外</div></div>
+                <div class="mt-6 flex flex-wrap gap-2 text-xs">
+                  <span class="px-3 py-2 rounded-full bg-white/75">降雨 10%</span>
+                  <span class="px-3 py-2 rounded-full bg-white/75">风力 2级</span>
+                  <span class="px-3 py-2 rounded-full bg-white/75">紫外线中等</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="rounded-[28px] bg-sanfu-orange text-white p-6 md:p-8 relative overflow-hidden shadow-soft cursor-pointer group" onclick="go('recommend')">
+              <div class="absolute -right-4 -bottom-8 text-[130px] opacity-15 font-black">AI</div>
+              <div class="relative z-10">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-white/15 rounded-full text-xs">✨ AI 周末提案</div>
+                <h2 class="text-3xl md:text-4xl font-black mt-5 tracking-tight">今天不想做攻略？<br/>让我们替你选。</h2>
+                <p class="mt-3 text-white/80 text-sm leading-6">根据天气、预算、人数和兴趣，计算本周末最适合你的活动。</p>
+                <button class="mt-7 px-5 py-3 rounded-2xl bg-white text-sanfu-orange font-black group-hover:translate-x-1 transition">开始推荐 →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Categories -->
+          <div class="mt-9">
+            <div class="flex items-center justify-between">
+              <h3 class="font-black text-xl">你今天想怎么逛？</h3>
+              <button onclick="go('recommend')" class="text-sm text-sanfu-muted hover:text-sanfu-orange">查看全部</button>
+            </div>
+            <div class="flex gap-3 overflow-x-auto hide-scroll py-4">
+              <button class="category-chip" onclick="quickFilter('展览')">🎨 <span>展览</span></button>
+              <button class="category-chip" onclick="quickFilter('市集')">🧺 <span>市集</span></button>
+              <button class="category-chip" onclick="quickFilter('演出')">🎵 <span>演出</span></button>
+              <button class="category-chip" onclick="quickFilter('徒步')">🥾 <span>徒步</span></button>
+              <button class="category-chip" onclick="quickFilter('咖啡')">☕ <span>咖啡</span></button>
+              <button class="category-chip" onclick="quickFilter('摄影')">📷 <span>摄影</span></button>
+            </div>
+          </div>
+
+          <!-- Hot activities -->
+          <div class="mt-5">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="font-black text-xl">本周末热门活动</h3>
+                <p class="text-sm text-sanfu-muted mt-1">大家最近都在收藏这些地方</p>
+              </div>
+              <button onclick="go('recommend')" class="text-sm font-semibold text-sanfu-orange">更多活动 →</button>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5" id="homeEvents"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RECOMMEND -->
+      <section id="page-recommend" class="page hidden">
+        <div class="px-5 md:px-8 lg:px-12 pt-8">
+          <div class="max-w-4xl">
+            <div class="text-xs text-sanfu-orange font-bold uppercase tracking-[.18em]">AI Recommendation</div>
+            <h1 class="text-4xl md:text-5xl font-black tracking-[-.04em] mt-2">你的周末，不需要做选择题。</h1>
+            <p class="text-sanfu-muted mt-3">调整筛选器，推荐会实时变化。我们把“喜欢”与“适合”放在一起算。</p>
+          </div>
+
+          <div class="mt-7 bg-white rounded-[28px] border border-sanfu-line p-5 md:p-7 shadow-card">
+            <div class="grid lg:grid-cols-4 gap-5">
+              <div>
+                <div class="text-xs font-semibold text-sanfu-muted mb-2">预算</div>
+                <select id="budgetFilter" onchange="renderRecommendations()" class="w-full rounded-2xl border border-sanfu-line px-4 py-3 bg-[#FFFCF9] outline-none">
+                  <option value="all">不限预算</option><option value="0-50">¥50内</option><option value="50-100">¥50-100</option><option value="100+">¥100以上</option>
+                </select>
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-sanfu-muted mb-2">人数</div>
+                <select id="peopleFilter" onchange="renderRecommendations()" class="w-full rounded-2xl border border-sanfu-line px-4 py-3 bg-[#FFFCF9] outline-none">
+                  <option value="all">不限</option><option value="1">1人</option><option value="2">2人</option><option value="3+">3人以上</option>
+                </select>
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-sanfu-muted mb-2">兴趣</div>
+                <select id="interestFilter" onchange="renderRecommendations()" class="w-full rounded-2xl border border-sanfu-line px-4 py-3 bg-[#FFFCF9] outline-none">
+                  <option value="all">全部兴趣</option><option value="展览">展览</option><option value="市集">市集</option><option value="演出">演出</option><option value="徒步">徒步</option><option value="摄影">摄影</option>
+                </select>
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-sanfu-muted mb-2">天气</div>
+                <select id="weatherFilter" onchange="renderRecommendations()" class="w-full rounded-2xl border border-sanfu-line px-4 py-3 bg-[#FFFCF9] outline-none">
+                  <option value="all">适配今日晴天</option><option value="室内">室内优先</option><option value="户外">户外优先</option>
+                </select>
+              </div>
+            </div>
+            <div class="mt-5 flex items-center justify-between border-t border-sanfu-line pt-5">
+              <div class="text-sm text-sanfu-muted">当前偏好 <span id="filterSummary" class="text-sanfu-ink font-semibold"></span></div>
+              <button onclick="resetFilters()" class="text-sm font-semibold hover:text-sanfu-orange">重置</button>
+            </div>
+          </div>
+
+          <div class="mt-8">
+            <div class="flex items-end justify-between mb-4">
+              <div><h2 class="font-black text-2xl">推荐给你的活动</h2><p class="text-sm text-sanfu-muted mt-1">综合兴趣 × 天气 × 预算 × 热度</p></div>
+              <div class="text-sm font-semibold text-sanfu-orange" id="resultCount"></div>
+            </div>
+            <div id="recommendEvents" class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TEAMS -->
+      <section id="page-teams" class="page hidden">
+        <div class="px-5 md:px-8 lg:px-12 pt-8">
+          <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
+            <div>
+              <div class="text-xs text-sanfu-orange font-bold uppercase tracking-[.18em]">Find Your People</div>
+              <h1 class="text-4xl md:text-5xl font-black tracking-[-.04em] mt-2">一个人想去，<br/>不代表要一个人去。</h1>
+              <p class="text-sanfu-muted mt-3">找到同样想去的人，一起出发。</p>
+            </div>
+            <button onclick="openCreateTeam()" class="px-5 py-3.5 rounded-2xl bg-sanfu-orange text-white font-black shadow-card hover:-translate-y-0.5 transition">＋ 发起组队</button>
+          </div>
+
+          <div class="mt-8 flex gap-2 overflow-x-auto hide-scroll">
+            <button class="team-filter active" onclick="setTeamFilter(this,'全部')">全部</button>
+            <button class="team-filter" onclick="setTeamFilter(this,'展览')">展览</button>
+            <button class="team-filter" onclick="setTeamFilter(this,'市集')">市集</button>
+            <button class="team-filter" onclick="setTeamFilter(this,'徒步')">徒步</button>
+            <button class="team-filter" onclick="setTeamFilter(this,'演出')">演出</button>
+          </div>
+
+          <div class="grid lg:grid-cols-[1.25fr_.75fr] gap-6 mt-6">
+            <div id="teamList" class="space-y-4"></div>
+            <div class="bg-[#EFE7DC] rounded-[28px] p-6 h-fit sticky top-24">
+              <div class="text-sm font-bold text-[#765F4D]">组队小贴士</div>
+              <h3 class="text-2xl font-black mt-3">一起去，比计划更重要。</h3>
+              <p class="text-sm text-[#765F4D] leading-6 mt-3">提前写清楚时间、集合点与预计花费，队友会更容易加入。</p>
+              <div class="mt-6 p-4 bg-white/70 rounded-2xl">
+                <div class="text-xs text-[#8E7765]">本周已组队出发</div>
+                <div class="text-3xl font-black mt-1">428 <span class="text-base font-semibold">人次</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHECKIN -->
+      <section id="page-checkin" class="page hidden">
+        <div class="px-5 md:px-8 lg:px-12 pt-8">
+          <div class="max-w-4xl">
+            <div class="text-xs text-sanfu-orange font-bold uppercase tracking-[.18em]">Weekend Diary</div>
+            <h1 class="text-4xl md:text-5xl font-black tracking-[-.04em] mt-2">把去过的地方，<br/>变成自己的城市地图。</h1>
+            <p class="text-sanfu-muted mt-3">上传一张照片，留下你的分数和一句话。下次有人纠结去哪时，就能找到你。</p>
+          </div>
+
+          <div class="grid lg:grid-cols-[.9fr_1.1fr] gap-6 mt-8">
+            <div class="bg-white rounded-[28px] border border-sanfu-line p-6 shadow-card">
+              <div class="flex items-center justify-between">
+                <h2 class="font-black text-xl">新建打卡</h2>
+                <span class="text-xs px-3 py-1.5 bg-[#FFF2EA] text-sanfu-orange rounded-full">+20 积分</span>
+              </div>
+              <label class="block mt-6 text-sm font-semibold">活动名称</label>
+              <input id="checkinTitle" class="w-full mt-2 px-4 py-3 rounded-2xl border border-sanfu-line bg-[#FFFCF9]" placeholder="比如：代官山周末市集">
+              <label class="block mt-5 text-sm font-semibold">照片</label>
+              <label class="mt-2 rounded-[24px] border-2 border-dashed border-sanfu-line bg-[#FFFCF9] h-48 grid place-items-center cursor-pointer hover:border-sanfu-orange transition">
+                <input id="checkinImage" type="file" accept="image/*" class="hidden" onchange="previewImage(event)">
+                <div class="text-center" id="uploadHint">
+                  <div class="text-4xl">📷</div>
+                  <div class="font-semibold mt-2">点击上传照片</div>
+                  <div class="text-xs text-sanfu-muted mt-1">JPG / PNG · 10MB以内</div>
+                </div>
+                <img id="preview" class="hidden h-full w-full object-cover rounded-[20px]" alt="">
+              </label>
+
+              <label class="block mt-5 text-sm font-semibold">你的评分</label>
+              <div id="stars" class="flex gap-2 mt-2">
+                <button class="star text-3xl" onclick="rate(1)">★</button>
+                <button class="star text-3xl" onclick="rate(2)">★</button>
+                <button class="star text-3xl" onclick="rate(3)">★</button>
+                <button class="star text-3xl" onclick="rate(4)">★</button>
+                <button class="star text-3xl" onclick="rate(5)">★</button>
+              </div>
+              <div id="ratingText" class="text-xs text-sanfu-muted mt-1">点击星星评分</div>
+              <label class="block mt-5 text-sm font-semibold">一句话攻略</label>
+              <textarea id="checkinNote" class="w-full mt-2 px-4 py-3 rounded-2xl border border-sanfu-line bg-[#FFFCF9] h-28 resize-none" placeholder="适合什么时候去？值得排队吗？"></textarea>
+              <button onclick="publishCheckin()" class="mt-5 w-full py-4 rounded-2xl bg-sanfu-orange text-white font-black hover:-translate-y-0.5 transition shadow-card">发布打卡</button>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between">
+                <div><h2 class="font-black text-2xl">大家的周末</h2><p class="text-sm text-sanfu-muted mt-1">真实体验，帮你降低决策成本</p></div>
+                <span class="text-xs text-sanfu-muted">最新发布</span>
+              </div>
+              <div id="feed" class="grid md:grid-cols-2 gap-5 mt-4"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Mobile Nav -->
+    <nav class="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white/95 glass border-t border-sanfu-line">
+      <div class="grid grid-cols-4 h-[74px]">
+        <button class="mobileNav" data-page="home" onclick="go('home')"><span>⌂</span><small>首页</small><i class="nav-dot"></i></button>
+        <button class="mobileNav" data-page="recommend" onclick="go('recommend')"><span>✦</span><small>AI推荐</small><i class="nav-dot"></i></button>
+        <button class="mobileNav" data-page="teams" onclick="go('teams')"><span>♧</span><small>组队</small><i class="nav-dot"></i></button>
+        <button class="mobileNav" data-page="checkin" onclick="go('checkin')"><span>◉</span><small>打卡</small><i class="nav-dot"></i></button>
+      </div>
+    </nav>
+
+    <!-- Modal -->
+    <div id="modal" class="modal fixed inset-0 z-[60] bg-black/35 flex items-end md:items-center justify-center p-0 md:p-6">
+      <div class="modal-card bg-white w-full md:max-w-lg rounded-t-[30px] md:rounded-[30px] p-6 md:p-7 shadow-soft max-h-[90vh] overflow-auto">
+        <div class="flex items-center justify-between">
+          <h3 id="modalTitle" class="text-2xl font-black"></h3>
+          <button onclick="closeModal()" class="w-9 h-9 rounded-full bg-[#F7F5F2]">×</button>
+        </div>
+        <div id="modalBody" class="mt-5"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const events = [
+  {id:1,title:'代官山周末设计市集',cat:'市集',price:0,people:'2-3',weather:'户外',score:96,heat:95,tag:'慢逛 · 咖啡 · 小众',loc:'代官山 T-SITE',time:'周六 11:00–18:00',emoji:'🧺',bg:'#E7EFE3'},
+  {id:2,title:'森美术馆：城市与想象',cat:'展览',price:50,people:'1-2',weather:'室内',score:94,heat:91,tag:'摄影 · 艺术 · 雨天友好',loc:'六本木',time:'周末 10:00–22:00',emoji:'🎨',bg:'#EDE6F2'},
+  {id:3,title:'夜樱河畔 Live House',cat:'演出',price:80,people:'2-4',weather:'室内',score:88,heat:89,tag:'音乐 · 夜生活 · 氛围感',loc:'下北泽',time:'周六 18:30–22:00',emoji:'🎵',bg:'#EAE0DA'},
+  {id:4,title:'高尾山轻徒步路线',cat:'徒步',price:0,people:'2-3+',weather:'户外',score:92,heat:86,tag:'自然 · 运动 · 周末放空',loc:'高尾山口',time:'周日 09:00–15:00',emoji:'🥾',bg:'#E4EFEA'},
+  {id:5,title:'清澄白河咖啡巡游',cat:'咖啡',price:40,people:'1-2',weather:'户外',score:89,heat:84,tag:'咖啡 · 摄影 · City Walk',loc:'清澄白河',time:'周六 10:00–16:00',emoji:'☕',bg:'#EDE8DF'},
+  {id:6,title:'浅草独立摄影展',cat:'摄影',price:30,people:'1-2',weather:'室内',score:87,heat:78,tag:'胶片 · 人文 · 独处',loc:'浅草',time:'周日 12:00–19:00',emoji:'📷',bg:'#E8E9EF'},
+  {id:7,title:'中目黑创意小店路线',cat:'市集',price:20,people:'2-3',weather:'户外',score:85,heat:82,tag:'逛街 · 设计 · 拍照',loc:'中目黑',time:'周六 12:00–17:00',emoji:'👜',bg:'#F0E8DD'},
+  {id:8,title:'涩谷城市声音计划',cat:'演出',price:120,people:'2-4',weather:'室内',score:83,heat:80,tag:'声音 · 夜游 · 新鲜感',loc:'涩谷',time:'周日 17:00–21:00',emoji:'🎧',bg:'#E8E3EF'}
+];
+
+const teams = [
+  {id:1,event:'代官山周末设计市集',cat:'市集',time:'周六 13:00',place:'代官山站集合',now:2,max:5,owner:'Mika',avatar:'M',note:'想一起逛摊、拍照，顺便喝咖啡。'},
+  {id:2,event:'高尾山轻徒步路线',cat:'徒步',time:'周日 09:00',place:'新宿站出发',now:4,max:6,owner:'Ken',avatar:'K',note:'第一次走高尾山，节奏慢一点。'},
+  {id:3,event:'森美术馆：城市与想象',cat:'展览',time:'周六 15:00',place:'六本木站集合',now:1,max:4,owner:'Rina',avatar:'R',note:'喜欢摄影和当代艺术，结束后去附近吃饭。'},
+  {id:4,event:'夜樱河畔 Live House',cat:'演出',time:'周六 18:30',place:'下北泽站集合',now:3,max:5,owner:'Leo',avatar:'L',note:'喜欢独立音乐，轻社交，演出后可自由活动。'}
+];
+
+const feed = [
+  {title:'代官山设计市集',user:'Mia',rating:5,note:'建议下午去，摊位更有气氛。二楼咖啡店适合歇脚。',emoji:'🧺',bg:'#E7EFE3'},
+  {title:'清澄白河咖啡巡游',user:'Yuki',rating:4,note:'店很多，提前选2-3家就好，不然会走到累。',emoji:'☕',bg:'#EDE8DF'},
+  {title:'森美术馆',user:'Sora',rating:5,note:'展陈很适合拍局部细节，晚上人相对少一些。',emoji:'🎨',bg:'#EDE6F2'},
+  {title:'高尾山轻徒步',user:'Tomo',rating:5,note:'晴天值得去。穿舒适鞋，带水；山顶风景比想象中好。',emoji:'🥾',bg:'#E4EFEA'}
+];
+
+let currentPage='home', teamFilter='全部', rating=0;
+
+function go(page){
+  currentPage=page;
+  document.querySelectorAll('.page').forEach(el=>el.classList.add('hidden'));
+  const target=document.getElementById('page-'+page); if(target) target.classList.remove('hidden');
+  document.querySelectorAll('.navLink').forEach(el=>{el.classList.toggle('nav-active',el.dataset.page===page)});
+  document.querySelectorAll('.mobileNav').forEach(el=>{el.classList.toggle('nav-active',el.dataset.page===page)});
+  if(page==='recommend') renderRecommendations();
+  if(page==='teams') renderTeams();
+  if(page==='checkin') renderFeed();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function eventCard(e, compact=false){
+  return `<article class="bg-white rounded-[24px] overflow-hidden border border-sanfu-line shadow-card hover:-translate-y-1 transition duration-300 cursor-pointer animate-fadeUp" onclick="openEvent(${e.id})">
+    <div class="h-44 relative grid place-items-center" style="background:${e.bg}">
+      <div class="text-7xl">${e.emoji}</div>
+      <span class="absolute left-4 top-4 px-3 py-1.5 rounded-full bg-white/85 text-xs font-bold">${e.cat}</span>
+      <span class="absolute right-4 top-4 px-3 py-1.5 rounded-full bg-black/70 text-white text-xs font-bold">${e.score}% 匹配</span>
+    </div>
+    <div class="p-5">
+      <h3 class="font-black text-lg leading-tight">${e.title}</h3>
+      <div class="text-xs text-sanfu-muted mt-2">${e.loc} · ${e.time}</div>
+      <div class="flex flex-wrap gap-2 mt-3">${e.tag.split(' · ').map(x=>`<span class="px-2.5 py-1 rounded-full bg-[#F7F5F2] text-xs">${x}</span>`).join('')}</div>
+      <div class="flex items-center justify-between mt-5">
+        <div class="font-black">${e.price===0?'免费':'¥'+e.price}<span class="text-xs text-sanfu-muted font-normal"> / 人</span></div>
+        <span class="text-xs font-semibold text-sanfu-orange">收藏 ${e.heat}% 热度</span>
+      </div>
+    </div>
+  </article>`;
+}
+
+function renderHome(){
+  document.getElementById('homeEvents').innerHTML=events.slice(0,6).map(e=>eventCard(e)).join('');
+}
+
+function renderRecommendations(){
+  const budget=document.getElementById('budgetFilter').value;
+  const people=document.getElementById('peopleFilter').value;
+  const interest=document.getElementById('interestFilter').value;
+  const weather=document.getElementById('weatherFilter').value;
+  let list=events.filter(e=>{
+    let ok=true;
+    if(budget==='0-50') ok &= e.price<=50;
+    if(budget==='50-100') ok &= e.price>=50 && e.price<=100;
+    if(budget==='100+') ok &= e.price>100;
+    if(interest!=='all') ok &= e.cat===interest || e.tag.includes(interest);
+    if(weather==='室内') ok &= e.weather==='室内';
+    if(weather==='户外') ok &= e.weather==='户外';
+    if(people==='1') ok &= e.people.includes('1');
+    if(people==='2') ok &= e.people.includes('2');
+    if(people==='3+') ok &= e.people.includes('3');
+    return ok;
+  });
+  list.sort((a,b)=>b.score-a.score);
+  document.getElementById('recommendEvents').innerHTML=list.length?list.map(e=>eventCard(e)).join(''):`<div class="col-span-full py-20 text-center text-sanfu-muted">没有找到完全匹配的活动，试试放宽筛选条件。</div>`;
+  document.getElementById('resultCount').textContent=`${list.length} 个结果`;
+  const vals=[budget==='all'?'不限预算':budget,people==='all'?'不限人数':people+'人',interest==='all'?'全部兴趣':interest,weather==='all'?'晴天友好':weather];
+  document.getElementById('filterSummary').textContent=' · '+vals.join(' · ');
+}
+
+function resetFilters(){
+  ['budgetFilter','peopleFilter','interestFilter','weatherFilter'].forEach(id=>document.getElementById(id).value='all');
+  renderRecommendations();
+}
+function quickFilter(cat){
+  go('recommend');
+  setTimeout(()=>{document.getElementById('interestFilter').value=cat; renderRecommendations()},50);
+}
+
+function renderTeams(){
+  const list=teams.filter(t=>teamFilter==='全部'||t.cat===teamFilter);
+  document.getElementById('teamList').innerHTML=list.map(t=>`
+    <article class="bg-white border border-sanfu-line rounded-[24px] p-5 md:p-6 shadow-card hover:shadow-soft transition">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex gap-3">
+          <div class="w-11 h-11 rounded-full bg-[#F6E7DC] grid place-items-center font-black text-sanfu-orange">${t.avatar}</div>
+          <div><div class="text-xs text-sanfu-muted">${t.owner} 发起 · ${t.time}</div><h3 class="font-black text-xl mt-1">${t.event}</h3></div>
+        </div>
+        <span class="px-3 py-1.5 rounded-full bg-[#FFF2EA] text-sanfu-orange text-xs font-bold">${t.cat}</span>
+      </div>
+      <div class="mt-4 text-sm text-sanfu-muted">📍 ${t.place}</div>
+      <p class="mt-3 text-sm leading-6">${t.note}</p>
+      <div class="mt-5 flex items-center justify-between">
+        <div>
+          <div class="text-xs text-sanfu-muted">已加入</div>
+          <div class="font-black mt-1">${t.now}/${t.max} 人</div>
+        </div>
+        <button onclick="joinTeam(${t.id})" class="px-5 py-3 rounded-2xl bg-sanfu-orange text-white font-black hover:-translate-y-0.5 transition">加入队伍</button>
+      </div>
+      <div class="h-2 bg-[#F2EFEB] rounded-full mt-4 overflow-hidden"><div class="h-full bg-sanfu-orange rounded-full" style="width:${t.now/t.max*100}%"></div></div>
+    </article>`).join('');
+}
+function setTeamFilter(btn,filter){
+  document.querySelectorAll('.team-filter').forEach(x=>x.classList.remove('active'));
+  btn.classList.add('active'); teamFilter=filter; renderTeams();
+}
+function joinTeam(id){
+  const t=teams.find(x=>x.id===id);
+  if(t.now<t.max){t.now++; renderTeams(); openInfo('加入成功',`你已加入「${t.event}」队伍。集合时间：${t.time}。`);}
+  else openInfo('队伍已满','可以关注其他同城队伍。');
+}
+
+function renderFeed(){
+  document.getElementById('feed').innerHTML=feed.map((f,i)=>`
+    <article class="bg-white rounded-[24px] border border-sanfu-line overflow-hidden shadow-card">
+      <div class="h-44 grid place-items-center" style="background:${f.bg}"><div class="text-7xl">${f.emoji}</div></div>
+      <div class="p-5">
+        <div class="flex items-center justify-between"><h3 class="font-black">${f.title}</h3><span class="text-xs text-sanfu-muted">${f.user}</span></div>
+        <div class="mt-2 text-sanfu-orange tracking-[.15em]">${'★'.repeat(f.rating)}<span class="text-[#DAD6D0]">${'★'.repeat(5-f.rating)}</span></div>
+        <p class="text-sm text-sanfu-muted leading-6 mt-3">${f.note}</p>
+      </div>
+    </article>`).join('');
+}
+
+function rate(n){
+  rating=n;
+  document.querySelectorAll('.star').forEach((s,i)=>s.classList.toggle('text-sanfu-orange',i<n));
+  document.getElementById('ratingText').textContent=`${n}.0 分 · ${['','一般','还不错','值得去','很喜欢','强烈推荐'][n]}`;
+}
+function previewImage(e){
+  const f=e.target.files?.[0]; if(!f)return;
+  const reader=new FileReader(); reader.onload=ev=>{document.getElementById('preview').src=ev.target.result; document.getElementById('preview').classList.remove('hidden'); document.getElementById('uploadHint').classList.add('hidden')}; reader.readAsDataURL(f);
+}
+function publishCheckin(){
+  const title=document.getElementById('checkinTitle').value.trim()||'我的周末打卡';
+  const note=document.getElementById('checkinNote').value.trim()||'今天的城市探索，刚刚好。';
+  if(!rating){openInfo('还差一步','给这次周末体验点个分数吧。');return;}
+  feed.unshift({title,user:'你',rating,note,emoji:'📍',bg:'#F0E6DE'}); renderFeed();
+  document.getElementById('checkinTitle').value='';document.getElementById('checkinNote').value='';rating=0;rate(0);
+  document.getElementById('preview').classList.add('hidden');document.getElementById('uploadHint').classList.remove('hidden');
+  openInfo('发布成功','已获得 +20 积分。你的攻略现在可以帮助更多人决定周末去哪玩。');
+}
+function openEvent(id){
+  const e=events.find(x=>x.id===id);
+  openModal(e.title,`
+    <div class="rounded-3xl p-5" style="background:${e.bg}">
+      <div class="text-6xl text-center">${e.emoji}</div>
+    </div>
+    <div class="grid grid-cols-2 gap-3 mt-4 text-sm">
+      <div class="p-4 bg-[#FAF8F5] rounded-2xl"><div class="text-sanfu-muted text-xs">推荐匹配度</div><div class="text-2xl font-black text-sanfu-orange mt-1">${e.score}%</div></div>
+      <div class="p-4 bg-[#FAF8F5] rounded-2xl"><div class="text-sanfu-muted text-xs">预算</div><div class="text-2xl font-black mt-1">${e.price===0?'免费':'¥'+e.price}</div></div>
+    </div>
+    <div class="mt-5 space-y-3 text-sm">
+      <div>📍 ${e.loc}</div><div>🕒 ${e.time}</div><div>🌤️ ${e.weather==='户外'?'适合今日晴天':'雨天也不影响'}</div>
+    </div>
+    <button onclick="go('teams');closeModal()" class="mt-6 w-full py-4 bg-sanfu-orange text-white rounded-2xl font-black">找搭子一起去</button>
+  `);
+}
+function openCreateTeam(){
+  openModal('发起一支周末队伍',`
+    <label class="text-sm font-semibold">想去哪里</label>
+    <input id="teamEvent" class="w-full mt-2 px-4 py-3 rounded-2xl border border-sanfu-line" placeholder="例如：代官山周末设计市集">
+    <label class="text-sm font-semibold block mt-4">集合时间</label>
+    <input id="teamTime" type="datetime-local" class="w-full mt-2 px-4 py-3 rounded-2xl border border-sanfu-line">
+    <label class="text-sm font-semibold block mt-4">最多人数</label>
+    <select id="teamMax" class="w-full mt-2 px-4 py-3 rounded-2xl border border-sanfu-line"><option>4</option><option>5</option><option>6</option><option>8</option></select>
+    <button onclick="createTeam()" class="mt-6 w-full py-4 bg-sanfu-orange text-white rounded-2xl font-black">发布组队</button>
+  `);
+}
+function createTeam(){
+  const eventName=document.getElementById('teamEvent').value.trim()||'城市周末探索';
+  const max=+document.getElementById('teamMax').value;
+  teams.unshift({id:Date.now(),event:eventName,cat:'其他',time:'本周末',place:'待定集合点',now:1,max,owner:'你',avatar:'Y',note:'欢迎想一起出发的同城朋友加入。'});
+  closeModal();go('teams');
+  openInfo('组队已发布','有人加入后，你会在这里看到最新状态。');
+}
+function openProfile(){
+  openModal('我的周末档案',`
+    <div class="flex items-center gap-4 p-4 rounded-2xl bg-[#FAF8F5]">
+      <div class="w-14 h-14 rounded-full bg-[#F6E7DC] grid place-items-center font-black text-sanfu-orange text-xl">Yi</div>
+      <div><div class="font-black">Yi</div><div class="text-xs text-sanfu-muted mt-1">本月探索 6 个地点</div></div>
+    </div>
+    <div class="grid grid-cols-3 gap-3 mt-4 text-center">
+      <div class="p-4 border border-sanfu-line rounded-2xl"><div class="font-black text-xl">6</div><div class="text-xs text-sanfu-muted">打卡</div></div>
+      <div class="p-4 border border-sanfu-line rounded-2xl"><div class="font-black text-xl">128</div><div class="text-xs text-sanfu-muted">积分</div></div>
+      <div class="p-4 border border-sanfu-line rounded-2xl"><div class="font-black text-xl">3</div><div class="text-xs text-sanfu-muted">组队</div></div>
+    </div>
+  `);
+}
+function openCity(){openInfo('城市选择','当前演示城市：东京。正式产品可接入定位、天气和城市活动数据。')}
+function openInfo(title,body){openModal(title,`<p class="text-sm text-sanfu-muted leading-7">${body}</p><button onclick="closeModal()" class="mt-6 w-full py-3 rounded-2xl bg-sanfu-orange text-white font-black">好的</button>`)}
+function openModal(title,body){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=body;document.getElementById('modal').classList.add('show')}
+function closeModal(){document.getElementById('modal').classList.remove('show')}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+
+const style=document.createElement('style');
+style.textContent=`
+.category-chip{display:flex;align-items:center;gap:8px;padding:13px 17px;background:#fff;border:1px solid #EAE7E3;border-radius:999px;white-space:nowrap;font-weight:700;transition:.2s}.category-chip:hover{border-color:#F56C2D;color:#F56C2D;transform:translateY(-2px)}
+.team-filter{padding:10px 16px;border:1px solid #EAE7E3;border-radius:999px;background:#fff;white-space:nowrap;font-size:13px;font-weight:700}.team-filter.active{background:#F56C2D;color:#fff;border-color:#F56C2D}
+.mobileNav{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:19px;position:relative}.mobileNav small{font-size:11px;font-weight:700;color:#888}.mobileNav .nav-dot{width:4px;height:4px;background:#F56C2D;border-radius:50%;opacity:0;transform:scale(.5);transition:.2s}.mobileNav.nav-active small{color:#F56C2D}
+.star{color:#DAD6D0;transition:.15s}.star:hover{transform:scale(1.12)}
+`;
+document.head.appendChild(style);
+
+renderHome(); renderFeed(); go('home');
+</script>
+</body>
+</html>
